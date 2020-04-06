@@ -1,3 +1,5 @@
+Change by JustinHop: just ran 2to3 on the .py files.
+
 python-mpd-server permits to bind a player to a `MPD server <http://mpd.wikia.com>`_. 
 
 You can control your player with a MPD client such as `Sonata

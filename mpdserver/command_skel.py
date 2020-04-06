@@ -1,4 +1,4 @@
-from command_base import *
+from .command_base import *
 
 ################################
 # Default Commands Definitions #

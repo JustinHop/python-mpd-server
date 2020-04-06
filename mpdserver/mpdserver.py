@@ -27,8 +27,8 @@ A client connection can begin by a password command. In this case, a
 :class:`Frontend` is created by client password command. This object
 is provided to commands treated during this session.
 """
-import SocketServer
-SocketServer.TCPServer.allow_reuse_address = True
+import socketserver
+socketserver.TCPServer.allow_reuse_address = True
 import time
 import re 
 import threading
@@ -38,8 +38,8 @@ import sys
 #import pimp.core.db
 import logging
 
-from command_base import *
-from command_skel import *
+from .command_base import *
+from .command_skel import *
 
 logger=logging
 #logger.basicConfig(level=logging.INFO)
@@ -113,7 +113,7 @@ class Frontend(object):
         return cls._DefaultUsername
         
 
-class MpdRequestHandler(SocketServer.StreamRequestHandler):
+class MpdRequestHandler(socketserver.StreamRequestHandler):
     """ Manage the connection from a mpd client. Each client
     connection instances this object."""
     Playlist=MpdPlaylist
@@ -169,13 +169,13 @@ class MpdRequestHandler(SocketServer.StreamRequestHandler):
         self.playlist=self.Playlist()
         self.frontend=Frontend()
         logger.debug( "Client connected (%s)" % threading.currentThread().getName())
-        SocketServer.StreamRequestHandler.__init__(self,request,client_address,server)
+        socketserver.StreamRequestHandler.__init__(self,request,client_address,server)
 
 
     """ Handle connection with mpd client. It gets client command,
     execute it and send a respond."""
     def handle(self):
-        welcome=u"OK MPD 0.13.0\n"
+        welcome="OK MPD 0.13.0\n"
         self.request.send(welcome.encode("utf-8"))
         while True:
             msg=""
@@ -211,7 +211,7 @@ class MpdRequestHandler(SocketServer.StreamRequestHandler):
                 logger.debug("Message sent:\n\t\t"+msg.replace("\n","\n\t\t"))
                 if respond == True:
                     self.request.send(msg)
-            except IOError,e:
+            except IOError as e:
                 logger.debug("Client disconnected (%s)"% threading.currentThread().getName())
                 break
 
@@ -255,7 +255,7 @@ class MpdRequestHandler(SocketServer.StreamRequestHandler):
         if commandName != None:
              cls.__SupportedCommands[commandNames]['users'].append(user)
         elif group != None:
-            for c in cls.__SupportedCommands.itervalues():
+            for c in cls.__SupportedCommands.values():
                 if c['group']==group:
                     c['users'].append(user)
         else:
@@ -265,13 +265,13 @@ class MpdRequestHandler(SocketServer.StreamRequestHandler):
     @classmethod
     def SupportedCommand(cls):
         """Return a list of command and allowed users."""
-        return ["%s\t\t%s"%(k,v['users']) for (k,v) in cls.__SupportedCommands.iteritems() if v['class']!=None ]
+        return ["%s\t\t%s"%(k,v['users']) for (k,v) in cls.__SupportedCommands.items() if v['class']!=None ]
     
 
     def __getCommandClass(self,commandName,frontend):
         """ To get a command class to execute on received command
         string. This method raise supported command errors."""
-        if not self.__SupportedCommands.has_key(commandName):
+        if commandName not in self.__SupportedCommands:
             logger.warning("Command '%s' is not a MPD command!" % commandName)
             raise CommandNotMPDCommand(commandName)
         elif self.__SupportedCommands[commandName]['class'] == None:
@@ -297,7 +297,7 @@ class MpdRequestHandler(SocketServer.StreamRequestHandler):
         
             
 
-class MpdServer(SocketServer.ThreadingMixIn,SocketServer.TCPServer):
+class MpdServer(socketserver.ThreadingMixIn,socketserver.TCPServer):
     """ Create a MPD server. By default, a request is treated via
     :class:`MpdRequestHandler` class but you can specify an alternative
     request class with RequestHandlerClass argument."""
@@ -307,7 +307,7 @@ class MpdServer(SocketServer.ThreadingMixIn,SocketServer.TCPServer):
     def __init__(self,port=6600,RequestHandlerClass=MpdRequestHandler):
         self.host, self.port = "", port
         self.requestHandler=RequestHandlerClass
-        SocketServer.TCPServer.__init__(self,(self.host,self.port),RequestHandlerClass)
+        socketserver.TCPServer.__init__(self,(self.host,self.port),RequestHandlerClass)
         
     def run(self):
         """Run MPD server in a blocking way."""

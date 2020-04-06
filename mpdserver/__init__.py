@@ -1,1 +1,1 @@
-from mpdserver import *
+from .mpdserver import *
